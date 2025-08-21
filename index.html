@@ -3,18 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>private-vid-ai</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <meta name="theme-color" content="#000000" />
+    <title>PrivateTube</title>
+    <meta name="description" content="Personal, distraction-free YouTube video consumption with AI chat" />
+    <meta name="author" content="PrivateTube" />
+    <link rel="manifest" href="/manifest.json" />
 
-    <meta property="og:title" content="private-vid-ai" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="PrivateTube" />
+    <meta property="og:description" content="Personal, distraction-free YouTube video consumption with AI chat" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <script>
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </head>
 
   <body>
