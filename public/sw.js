@@ -1,6 +1,6 @@
-const CACHE_NAME = 'privatetube-v1';
+const CACHE_NAME = 'private-tube-cache-v1';
 const STATIC_ASSETS = [
-  '/',
+    '/',
   '/index.html',
   '/manifest.json'
 ];
@@ -10,8 +10,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
-  );
+    ));
 });
 
 // Activate event - clean up old caches
@@ -22,11 +21,9 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames
             .filter((cacheName) => cacheName !== CACHE_NAME)
-            .map((cacheName) => caches.delete(cacheName))
+            .map((cacheName) => caches.delete(cacheName)) // Delete old caches
         );
-      })
-      .then(() => self.clients.claim())
-  );
+    }));
 });
 
 // Fetch event - serve from cache when offline
@@ -40,17 +37,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request)
-          .catch(() => {
-            // Return offline page for navigation requests
-            if (event.request.mode === 'navigate') {
-              return caches.match('/');
-            }
-          });
-      })
-  );
+  event.respondWith(caches.match(event.request)
+    .then((response) => {
+      return response || fetch(event.request);
+    }));
 });
