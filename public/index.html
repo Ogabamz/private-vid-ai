@@ -6,6 +6,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="manifest" href="/private-vid-ai/manifest.json" />
+    <title>PrivateTube</title>
+    <meta name="description" content="Personal, distraction-free YouTube video consumption with AI chat" />
+    <meta name="author" content="PrivateTube" />
+
+    <meta property="og:title" content="PrivateTube" />
+    <meta property="og:description" content="Personal, distraction-free YouTube video consumption with AI chat" />
+    <meta property="og:type" content="website" />
+
+    <script>
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/private-vid-ai/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
