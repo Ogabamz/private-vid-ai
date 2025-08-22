@@ -1,8 +1,8 @@
 const CACHE_NAME = 'private-tube-cache-v1';
 const STATIC_ASSETS = [
-    '/',
-  '/index.html',
-  '/manifest.json'
+ '/private-vid-ai/',
+ '/private-vid-ai/index.html',
+ '/private-vid-ai/manifest.json'
 ];
 
 // Install event - cache static assets
@@ -10,7 +10,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(STATIC_ASSETS))
-    ));
+  );
 });
 
 // Activate event - clean up old caches
