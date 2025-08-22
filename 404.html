@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>PrivateVid AI</title>
+    <script>
+      // Redirect all 404s back to index.html for SPA routing
+      var redirect = window.location.pathname.replace('/private-vid-ai', '');
+      sessionStorage.setItem('redirect', redirect);
+      window.location.href = '/private-vid-ai/index.html';
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

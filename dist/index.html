@@ -27,6 +27,15 @@
         });
       }
     </script>
+    <script>
+ (function() {
+ var redirect = sessionStorage.getItem('redirect');
+ if (redirect) {
+ sessionStorage.removeItem('redirect');
+ history.replaceState(null, null, redirect);
+ }
+ })();
+ </script>
     <script type="module" crossorigin src="/private-vid-ai/assets/index-bXqtnvlw.js"></script>
     <link rel="stylesheet" crossorigin href="/private-vid-ai/assets/index-C8QeRhI2.css">
   </head>
