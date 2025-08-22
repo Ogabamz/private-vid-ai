@@ -8,11 +8,18 @@ import { useToast } from "@/hooks/use-toast";
 
 type AppView = "setup" | "search" | "player" | "chat";
 
+interface TranscriptEntry {
+  text: string;
+  duration: number;
+  offset: number;
+}
+
 const Index = () => {
   const [currentView, setCurrentView] = useState<AppView>("setup");
   const [apiKeys, setApiKeys] = useState<{ youtube: string; gemini: string } | null>(null);
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
+  const [videoTranscript, setVideoTranscript] = useState<TranscriptEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -61,7 +68,7 @@ const Index = () => {
           // Generate summary using Gemini API
           try {
             const summaryResponse = await fetch(
-              `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKeys.gemini}`,
+              `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKeys.gemini}`,
               {
                 method: "POST",
                 headers: {
@@ -104,17 +111,126 @@ const Index = () => {
 
   const handlePlayVideo = (video: VideoData) => {
     setSelectedVideo(video);
+    setVideoTranscript([]); // Reset transcript when switching videos
     setCurrentView("player");
   };
 
-  const handleChatWithVideo = (video: VideoData) => {
+  const handleChatWithVideo = async (video: VideoData) => {
     setSelectedVideo(video);
     setCurrentView("chat");
+    
+    // Try to automatically load transcript using YouTube Data API v3
+    if (apiKeys?.youtube) {
+      try {
+        const response = await fetch(
+          `https://www.googleapis.com/youtube/v3/captions?part=snippet&videoId=${video.id}&key=${apiKeys.youtube}`
+        );
+        
+        if (response.ok) {
+          const captionsData = await response.json();
+          
+          if (captionsData.items && captionsData.items.length > 0) {
+            // Get the first available caption track (usually English)
+            const captionId = captionsData.items[0].id;
+            
+            // Now fetch the actual transcript content
+            const transcriptResponse = await fetch(
+              `https://www.googleapis.com/youtube/v3/captions/${captionId}?key=${apiKeys.youtube}`,
+              {
+                headers: {
+                  'Accept': 'application/json'
+                }
+              }
+            );
+            
+            if (transcriptResponse.ok) {
+              const transcriptText = await transcriptResponse.text();
+              // Parse the transcript (it comes in various formats)
+              const transcriptData = parseTranscriptText(transcriptText);
+              setVideoTranscript(transcriptData);
+            }
+          }
+        }
+      } catch (error) {
+        console.log("Could not auto-load transcript via API:", error);
+        // Fallback to the old method
+        try {
+          const response = await fetch(`https://www.youtube.com/api/timedtext?v=${video.id}&lang=en`);
+          if (response.ok) {
+            const xmlText = await response.text();
+            const transcriptData = parseTranscriptXML(xmlText);
+            setVideoTranscript(transcriptData);
+          }
+        } catch (fallbackError) {
+          console.log("Could not auto-load transcript via fallback:", fallbackError);
+        }
+      }
+    }
   };
 
   const handleBackToSearch = () => {
     setCurrentView("search");
     setSelectedVideo(null);
+    setVideoTranscript([]);
+  };
+
+  const handleTranscriptUpdate = (transcript: TranscriptEntry[]) => {
+    setVideoTranscript(transcript);
+  };
+
+  const parseTranscriptXML = (xmlText: string): TranscriptEntry[] => {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+    const textElements = xmlDoc.getElementsByTagName("text");
+    
+    const entries: TranscriptEntry[] = [];
+    for (let i = 0; i < textElements.length; i++) {
+      const element = textElements[i];
+      const start = parseFloat(element.getAttribute("start") || "0");
+      const duration = parseFloat(element.getAttribute("dur") || "0");
+      
+      entries.push({
+        text: element.textContent || "",
+        duration,
+        offset: start
+      });
+    }
+    
+    return entries;
+  };
+
+  const parseTranscriptText = (text: string): TranscriptEntry[] => {
+    // Handle different transcript formats
+    if (text.includes('<transcript>')) {
+      return parseTranscriptXML(text);
+    }
+    
+    // Handle plain text with timestamps
+    const lines = text.split('\n');
+    const entries: TranscriptEntry[] = [];
+    
+    for (const line of lines) {
+      // Look for timestamp patterns like [00:00] or (00:00)
+      const timestampMatch = line.match(/[\[\(](\d{1,2}):(\d{2})[\]\)]/);
+      if (timestampMatch) {
+        const minutes = parseInt(timestampMatch[1]);
+        const seconds = parseInt(timestampMatch[2]);
+        const offset = minutes * 60 + seconds;
+        
+        // Extract text after timestamp
+        const textContent = line.replace(/[\[\(]\d{1,2}:\d{2}[\]\)]\s*/, '').trim();
+        
+        if (textContent) {
+          entries.push({
+            text: textContent,
+            duration: 0,
+            offset: offset
+          });
+        }
+      }
+    }
+    
+    return entries;
   };
 
   if (currentView === "setup") {
@@ -122,19 +238,31 @@ const Index = () => {
   }
 
   if (currentView === "player" && selectedVideo) {
-    return <VideoPlayer video={selectedVideo} onBack={handleBackToSearch} />;
+    return (
+      <VideoPlayer 
+        video={selectedVideo} 
+        onBack={handleBackToSearch}
+        onTranscriptUpdate={handleTranscriptUpdate}
+      />
+    );
   }
 
   if (currentView === "chat" && selectedVideo) {
-    return <VideoChat video={selectedVideo} onBack={handleBackToSearch} />;
+    return (
+      <VideoChat 
+        video={selectedVideo} 
+        onBack={handleBackToSearch}
+        transcript={videoTranscript}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">PrivateTube</h1>
-          <p className="text-muted-foreground">Search, watch, and chat with YouTube videos</p>
+          <h1 className="text-3xl font-bold mb-2">PLAY AND TAKE NOTES</h1>
+          <p className="text-muted-foreground">Search, watch, and take notes on YouTube videos</p>
         </div>
         
         <VideoSearch onSearch={searchVideos} isLoading={isLoading} />
