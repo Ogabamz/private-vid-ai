@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <title>PrivateTube</title>
+    <meta name="description" content="Personal, distraction-free YouTube video consumption with AI chat" />
+    <meta name="author" content="PrivateTube" />
+    <link rel="manifest" href="/private-vid-ai/manifest.json" />
+
+    <meta property="og:title" content="PrivateTube" />
+    <meta property="og:description" content="Personal, distraction-free YouTube video consumption with AI chat" />
+    <meta property="og:type" content="website" />
+
+    <script>
+      // Register service worker for PWA functionality
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/private-vid-ai/assets/index-DqcdBzt5.js"></script>
+    <link rel="stylesheet" crossorigin href="/private-vid-ai/assets/index-C8QeRhI2.css">
+  </head>
+
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
